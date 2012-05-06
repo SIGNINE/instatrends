@@ -162,33 +162,34 @@ redis_listener.subscribe("popular") do |on|
 	on.message do |channel, msg|        
 		new_tags = $redis.zrevrange("popular", 0, 14)
 		puts msg
-		#This is a horrible way to filter new tags and get rid of
+		#This is a horrible way to filter new tags and shut down old ones
 		
 		for t in $tags.keys
 			#if tag is no longer popular, shut down tracker
 			unless new_tags.include? t
-                begin
-                     Thread.kill($tags[t])               
-                rescue Exception => e
-                end				
+                		begin
+                     			Thread.kill($tags[t])               
+               			 rescue Exception => e
+                		 end				
 				
-                $tags.delete t
+               			 $tags.delete t
 				print "Deleting thread #{t}\n"	
 			end					
 		end
 		
+		# Start threads for new tags
 		for t in new_tags			
-            unless $tags.has_key? t
-                puts "Creating thread #{t}\n"
-                $tags[t] = Thread.new(t) { |t|
-                    begin
-                        tracker(t)
-		    rescue Exception => e
-		        print "\n#{t}  #{e.message}\n"
-                        print e.backtrace.join("\n")					
-		        end
-		    } 	
-            end	
-    end
+            		unless $tags.has_key? t
+                		print "Creating thread #{t}\n"
+                		$tags[t] = Thread.new(t) { |t|
+                    		begin
+                        		tracker(t)
+		    		rescue Exception => e
+		        		print "\n#{t}  #{e.message}\n"
+                        		print e.backtrace.join("\n")					
+		        	end
+		    		} 	
+           		 end	
+   		 end
       	
 end
