@@ -1,3 +1,5 @@
+# Finds top popular tags are puts them into a redis sorted-set
+
 require 'json'
 require 'open-uri'
 require 'uri'

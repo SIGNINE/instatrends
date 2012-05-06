@@ -1,3 +1,5 @@
+# Track individual tags from popular sorted-set
+
 require 'redis'
 require 'mongo'
 require 'uri'

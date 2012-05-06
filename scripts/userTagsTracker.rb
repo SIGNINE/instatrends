@@ -1,3 +1,5 @@
+# Track tags specified by user
+
 require 'redis'
 require 'mongo'
 require 'uri'
