@@ -183,19 +183,12 @@ redis_listener.subscribe("popular") do |on|
                 $tags[t] = Thread.new(t) { |t|
                     begin
                         tracker(t)
-				    rescue Exception => e
-					    print "\n#{t}  #{e.message}\n"
+		    rescue Exception => e
+		        print "\n#{t}  #{e.message}\n"
                         print e.backtrace.join("\n")					
-				    end
-			    } 	
+		        end
+		    } 	
             end	
-		end
-        for k, v in $tags
-            print "#{k} : #{v}\n"
-        end        
-        
-        puts Thread.list.each { |t| p t}
-        puts $tags.length
-        puts Thread.list.length
-	end	
+    end
+      	
 end
