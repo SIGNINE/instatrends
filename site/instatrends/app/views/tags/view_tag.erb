@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>   
+    <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" rel="stylesheet">
+    <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="http://twitter.github.com/bootstrap/assets/css/docs.css" rel="stylesheet">
+    <script src="https://s3.amazonaws.com/StaticFiles/jquery-1.7.1-min.js" type="text/javascript"></script> 
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+  <script type="text/javascript" src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer.js"></script>
+    
+ </head>
+ <body>
+<div id="chart" >
+<img src="<%= @chart %>" >
+</div>
+
+<div id="map_canvas" style="width: 550px; height: 450px"></div>
+
+<p> Associated Tags: </p>
+<% unless @tag_stats.empty? %>
+<% counter = 1 %>
+<% for t in @tag_stats[1..@show] %>
+	<%= counter %>. <%= t[0] %> <%= t[1] %>% <br>
+	<% counter += 1 %>
+<% end %>
+<% end %>
+ 
+<div class="row show-grid" id="photos">
+
+ </div>
+
+<button type="button" id="loadPhotos" onClick="get_photos();"> Load More! </button>
+
+ <script type="text/javascript">
+ 
+ var tag_id = '<%= @tag["_id"] %>';
+ var tag_name = '<%= @tag["name"] %>';
+ var page = 1;
+ 	function get_photos(){
+ 		$.ajax({
+ 			type: "GET",
+ 			url: "../tags/photos",
+ 			data: {"tag" : tag_id, "page": page},
+ 			dataType: "JSON",
+ 			success : function(response){ 				
+ 				if (response.length == 0){
+ 					$("#loadPhotos").replaceWith('<p> Done </p>');
+ 				}
+ 				else {
+ 					for (i in response){
+ 						var photo_div = '<div class="span1"><a ' + '" href="../' + tag_name + '/' + response[i]["_id"]["$oid"] + 
+ 						'"><img src="' + response[i]["img_small"] + '"></a></div>';
+ 							
+ 						$(photo_div).appendTo("#photos");
+ 					}
+ 					page++; 					
+ 				}
+
+ 			}
+ 			 			
+ 		}); 		
+ 	}
+ function initialize() {
+    var myLatlng = new google.maps.LatLng(43.6481, 79.4042);
+    var myOptions = {
+      zoom: 2,
+      center: myLatlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    }
+    var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+    var markerArray = [];
+    <% for l in @loc %>
+    var l = new google.maps.LatLng(<%= l["location"][0] %>, <%= l["location"][1] %>);
+    var marker = new google.maps.Marker({
+        position: l, 
+        map: map,        
+    });
+    markerArray.push(marker);
+    <% end %> 
+    var markerCluster = new MarkerClusterer(map, markerArray); 
+  }
+ 
+ 
+ get_photos();
+ initialize()
+</script>
+
+</body>
+</html>

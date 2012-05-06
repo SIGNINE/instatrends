@@ -1,0 +1,28 @@
+<html>
+
+<img src="<%= @photo["img_large"] %>" >
+<% if @photo["link"] %>
+<p> <%= @photo["link"] %> </p>
+<% end %>
+
+<% if @photo["caption"] %>
+<p> <%= @photo["caption"] %> </p>
+<% end %>
+
+<p> Tags: </p>
+<p>
+<% for t in @photo["tags"] %>
+<%= t %> <br>
+<% end %>
+</p>
+
+<% if @photo["location"] %>
+<p> Location: </p
+<p> Lat: <%= @photo["location"][0] %> 
+    Long:  <%= @photo["location"][1] %> </p>
+<% end %>
+    
+<p> Created time: <%= @photo["created_time"] %> </p>
+
+
+</html>

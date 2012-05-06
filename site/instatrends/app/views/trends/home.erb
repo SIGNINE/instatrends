@@ -1,0 +1,85 @@
+<html>
+<script src="https://s3.amazonaws.com/StaticFiles/jquery-1.7.1-min.js" type="text/javascript"></script>
+<h3> Popular now: </h3>
+<div id="popularList" >
+
+<% for i in 0..(@tags.length - 1) %>
+<a href="../<%= @tags[i] %>">
+<%= i+1 %>. <%= @tags[i] %> <br>
+</a>
+<% end %>
+</div>
+<p id='updateTime'> Last update: <%= @time %> </p>
+<p>
+<% if @user_tags.length > 0 %>
+<h3> Also Tracking: </h3>
+<% for t in @user_tags %>
+<a href="../<%= t %>">
+<%= t %> <br>
+</a>
+<% end %>
+<% end %>
+<br>
+<div>
+Want to track a tag? (max 10):<br>
+<form>
+<input type="text" name="tag" id="tag_input" /> <br>
+<button type="button" id="addTag" onClick="user_tags('add');"> Add </button>
+<button type="button" id="deleteTag" onClick="user_tags('delete');"> Delete </button>
+</form>
+
+<script type="text/javascript">
+function user_tags(action){
+	var method = action == "add" ? "POST" : "DELETE";	
+	var input = document.getElementById("tag_input").value;
+	
+	$.ajax({
+		type: method,
+		data: {"tag" : input},
+		url: '../tags',
+		success: function(rsp){
+			if (rsp == 'done'){
+				if (action == "add"){
+					$("#addTag").replaceWith("done");
+				}
+				else{
+					$("#deleteTag").replaceWith("done");
+				}
+			}
+			else if (rsp == "maxed"){
+				$("#addTag").replaceWith("We are maxed out!");}
+			else if (rsp == "does not exist"){
+				$("#deleteTag").replaceWith("Tag doesn't exist!");}
+						
+		}
+
+	});
+}
+function update(){
+	$.ajax({
+	type: "GET",
+	url: "../",
+	dataType: "JSON", 
+	success: function (response){		
+		var data = "";
+		var counter = 1;
+		for (tag in response["data"]){
+			data += counter.toString() + ". " + response["data"][tag] + "<br>";
+			counter++;
+		}
+
+		$("#popularList").html(data);
+		$("#updateTime").html("Last update: " + response["time"]);
+
+		
+		}
+
+
+	}); 
+
+}
+
+setInterval("update()", 1000*10*60);
+
+</script>
+</html>
