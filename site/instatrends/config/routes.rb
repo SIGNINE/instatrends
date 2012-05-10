@@ -49,8 +49,7 @@ Instatrends::Application.routes.draw do
   # You can have the root of your site routed with "root"
   # just remember to delete public/index.html.
   # root :to => 'welcome#index'
-  root :to =>'trends#home'
-  match "/popular" => "trends#home"
+  root :to =>'trends#home'  
   match "/tags/photos" => "tags#view_photos"
   match "/tags" => "tags#tag"
   match "/:tag" => "tags#view_tag"   
