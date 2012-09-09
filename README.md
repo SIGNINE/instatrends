@@ -1,6 +1,6 @@
 instatrends
 ===========
 
-Track popular tags or any tag of your choice in instagram
+Track popular tags in instagram
 
-(The formatting looks messy in github, but it looks fine in my texteditor - sublime.)
+http://instatrends.herokuapp.com/
