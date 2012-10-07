@@ -6,7 +6,7 @@ require 'uri'
 require 'redis'
 
 #Redis 
-Redis_url = URI.parse('redis://redistogo:0a71fd9007797360bf43e845ca8cbf98@catfish.redistogo.com:9176/')
+Redis_url = URI.parse(ENV['REDISTOGO_URL'])
 $redis = Redis.new(:host => Redis_url.host, :port => Redis_url.port, :password => Redis_url.password)
 
 #Instagram
@@ -57,14 +57,14 @@ loop do
 		end
 
 		#Process photos
-		for i in data["data"]
+		data["data"].each do |i|
 			#Filter old elements by checking if id appeared before
 			next if old_ids.has_key? i["id"]
 			#Add id to hash
 			old_ids[i["id"]] = nil
 
 			#Aggregate tags
-			for tag in i["tags"]
+			i["tags"].each do |tag|
 				if tags.has_key? tag
 					tags[tag] += 1
 				else
@@ -85,7 +85,7 @@ loop do
 	$redis.multi do
 		#Fulsh set
 		$redis.del "popular"	
-		for i in sorted[0..limit]
+		sorted[0..limit].each do |i|
 			#filter out all tags with count == 1
 			break if i[1] == 1
 			$redis.zadd("popular", i[1], i[0])		

@@ -6,9 +6,9 @@ require 'uri'
 require 'open-uri'
 require 'json'
 
-Redis_url = URI.parse('redis://redistogo:0a71fd9007797360bf43e845ca8cbf98@catfish.redistogo.com:9176/')
-Mongo_url = "mongodb://heroku_app2168150:o6b2javvh03q2jn1mc3jjbjpdu@ds033067.mongolab.com:33067/heroku_app2168150"
- 
+Redis_url = URI.parse(ENV['REDISTOGO_URL'])
+Mongo_url = ENV['MONGOLAB_URI']
+
 #Instagram
 ClientID = 'ac07a2715b874192ac89818b329f350a'
 Base_url = 'https://api.instagram.com/v1'
@@ -80,9 +80,9 @@ def tracker(tag)
     #Get most recent 20 photos from db and put each photo id in a hash ( O(1) look up )
     #Check if each new photo exists in the hash before inserting in db
     #Add new photo ids to hash 
-    recent_photos = Hash.new
+    recent_photos = []
     last20 = col_photos.find({"tag" => tag_id}, {:limit => 20, :sort => ["created_time", -1]}).each do |p|
-        recent_photos[p["id"]] = nil 
+        recent_photos.push p["id"]
     end    
 
     #Get media count to calculate speed 
@@ -117,9 +117,9 @@ def tracker(tag)
                 
            exit if resp["meta"]["code"] != 200
 
-           for photo in resp["data"]
+           resp["data"].each do |photo|
                #Check if photo id is in hash               
-               if recent_photos.has_key? photo["id"]
+               if recent_photos.include? photo["id"]
                     next
                end
                #build photo JSON
@@ -138,7 +138,8 @@ def tracker(tag)
 
                 #Insert in db and update hash (is there bulk insert?)
                 col_photos.insert(new_photo)
-                recent_photos[photo["id"]] = nil    
+                recent_photos.push photo["id"]
+                recent_photos.shift if recent_photos.length > 20
            end
         end
         
@@ -156,19 +157,33 @@ def tracker(tag)
 end
 #---------------------------------------- MAIN ------------------------------------------------------
 
-
+#init - get list from redis and create threads
 $tags = Hash.new
+$redis.zrevrange("popular", 0, 14).each do |tag|
+    $tags[tag] = 
+    Thread.new(tag) { |t|
+                    begin
+                        tracker(t)
+                    rescue Exception => e
+                        print "\n#{t}  #{e.message}\n"
+                        print e.backtrace.join("\n")                    
+                    end
+                    puts "Adding"
+                }
+    end
+
 redis_listener.subscribe("popular") do |on|
 	on.message do |channel, msg|        
 		new_tags = $redis.zrevrange("popular", 0, 14)
 		puts msg
 		#This is a horrible way to filter new tags and shut down old ones
 		
-		for t in $tags.keys
+		$tags.keys.each do |t|
 			#if tag is no longer popular, shut down tracker
 			unless new_tags.include? t
                 		begin
-                     			Thread.kill($tags[t])               
+                     			#Thread.kill($tags[t])
+                                $tags[t].raise('Die')               
                			 rescue Exception => e
                 		 end				
 				
@@ -178,7 +193,7 @@ redis_listener.subscribe("popular") do |on|
 		end
 		
 		# Start threads for new tags
-		for t in new_tags			
+	    new_tags.each do |t|			
             		unless $tags.has_key? t
                 		print "Creating thread #{t}\n"
                 		$tags[t] = Thread.new(t) { |t|
@@ -191,5 +206,6 @@ redis_listener.subscribe("popular") do |on|
 		    		} 	
            		 end	
    		 end
+    end
       	
 end
